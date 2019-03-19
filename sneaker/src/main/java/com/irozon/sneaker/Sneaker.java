@@ -35,23 +35,22 @@ public class Sneaker implements View.OnClickListener {
     private static int mIcon = DEFAULT_VALUE;
     private static Drawable mIconDrawable = null;
     private static int mBackgroundColor = DEFAULT_VALUE;
-    private static int mHeight = DEFAULT_VALUE;
     private static int mIconColorFilterColor = DEFAULT_VALUE;
     private static int mIconSize = 24;
-    private static String mTitle = "";
     private static String mMessage = "";
-    private static int mTitleColor = DEFAULT_VALUE;
     private static int mMessageColor = DEFAULT_VALUE;
     private static boolean mAutoHide = true;
     private static int mDuration = 3000;
     private static WeakReference<LinearLayout> layoutWeakReference;
     private static WeakReference<Activity> contextWeakReference;
     private static boolean mIsCircular = false;
+    private static boolean mDismissOnTouch = false;
     private static OnSneakerClickListener mListener = null;
     private static OnSneakerDismissListener mDismissListener = null;
     private static Typeface mTypeFace = null;
     private static int mCornerRadius = DEFAULT_VALUE;
     private static int mMargin = DEFAULT_VALUE;
+    private static int mTextSize = 14;
 
     /**
      * Constructor
@@ -104,16 +103,14 @@ public class Sneaker implements View.OnClickListener {
      * Sets the default values to the sneaker
      */
     private static void setDefault() {
-        mTitle = "";
         mIcon = DEFAULT_VALUE;
         mIconDrawable = null;
         mIconColorFilterColor = DEFAULT_VALUE;
         mIconSize = 24;
+        mTextSize = 14;
         mBackgroundColor = DEFAULT_VALUE;
         mAutoHide = true;
-        mTitleColor = DEFAULT_VALUE;
         mMessageColor = DEFAULT_VALUE;
-        mHeight = DEFAULT_VALUE;
         mIsCircular = false;
         mListener = null;
         mTypeFace = null;
@@ -137,36 +134,6 @@ public class Sneaker implements View.OnClickListener {
      */
     private static View getLayout() {
         return layoutWeakReference.get();
-    }
-
-    /**
-     * Sets the title of the sneaker
-     *
-     * @param title string value of title
-     * @return
-     */
-    public Sneaker setTitle(String title) {
-        mTitle = title;
-        return this;
-    }
-
-    /**
-     * Sets the title of the sneaker with color
-     *
-     * @param title string value of title
-     * @param color Color resource for title text
-     * @return
-     */
-    public Sneaker setTitle(String title, int color) {
-        mTitle = title;
-        if (getContext() != null) {
-            try {
-                mTitleColor = ContextCompat.getColor(getContext(), color);
-            } catch (Exception e) {
-                mTitleColor = color;
-            }
-        }
-        return this;
     }
 
     /**
@@ -196,6 +163,11 @@ public class Sneaker implements View.OnClickListener {
                 mMessageColor = color;
             }
         }
+        return this;
+    }
+
+    public Sneaker setTextSize(int testSize) {
+        mTextSize = testSize;
         return this;
     }
 
@@ -365,17 +337,6 @@ public class Sneaker implements View.OnClickListener {
     }
 
     /**
-     * Sets the height to sneaker
-     *
-     * @param height Height value for sneaker
-     * @return
-     */
-    public Sneaker setHeight(int height) {
-        mHeight = height;
-        return this;
-    }
-
-    /**
      * Sets the duration for sneaker.
      * After this duration sneaker will disappear
      *
@@ -406,6 +367,11 @@ public class Sneaker implements View.OnClickListener {
         return this;
     }
 
+    public Sneaker setDismissOnTouch(boolean dismissOnTouch) {
+        mDismissOnTouch = dismissOnTouch;
+        return this;
+    }
+
     /**
      * Set font for title and message
      *
@@ -433,52 +399,7 @@ public class Sneaker implements View.OnClickListener {
         }
     }
 
-    /**
-     * Shows warning sneaker with fixed icon, background color and icon color.
-     * Icons, background and text colors for this are not customizable
-     */
-    public void sneakWarning() {
-        mBackgroundColor = Color.parseColor("#ffc100");
-        mTitleColor = Color.parseColor("#000000");
-        mMessageColor = Color.parseColor("#000000");
-        mIconColorFilterColor = Color.parseColor("#000000");
-        mIcon = R.drawable.ic_warning;
-
-        if (getContext() != null)
-            sneakView();
-    }
-
-    /**
-     * Shows error sneaker with fixed icon, background color and icon color.
-     * Icons, background and text colors for this are not customizable
-     */
-    public Sneaker sneakError() {
-        mBackgroundColor = Color.parseColor("#ff0000");
-        mTitleColor = Color.parseColor("#FFFFFF");
-        mMessageColor = Color.parseColor("#FFFFFF");
-        mIconColorFilterColor = Color.parseColor("#FFFFFF");
-        mIcon = R.drawable.ic_error;
-
-        if (getContext() != null)
-            sneakView();
-        return null;
-    }
-
-    /**
-     * Shows success sneaker with fixed icon, background color and icon color.
-     * Icons, background and text colors for this are not customizable
-     */
-    public Sneaker sneakSuccess() {
-        mBackgroundColor = Color.parseColor("#2bb600");
-        mTitleColor = Color.parseColor("#FFFFFF");
-        mMessageColor = Color.parseColor("#FFFFFF");
-        mIconColorFilterColor = Color.parseColor("#FFFFFF");
-        mIcon = R.drawable.ic_success;
-
-        if (getContext() != null)
-            sneakView();
-        return null;
-    }
+    private static Handler handler = new Handler();
 
     /**
      * Creates the view and sneaks in
@@ -489,10 +410,13 @@ public class Sneaker implements View.OnClickListener {
         LinearLayout layout = new LinearLayout(getContext());
         layoutWeakReference = new WeakReference<>(layout);
 
-        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, mHeight == DEFAULT_VALUE ? (Utils.getStatusBarHeight((Activity) getContext()) + Utils.convertToDp(getContext(), 56)) : Utils.convertToDp(getContext(), mHeight));
+        LinearLayout.LayoutParams layoutParams = new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT
+        );
+
         if (mMargin != DEFAULT_VALUE) {
             layoutParams.setMargins(Utils.convertToDp(getContext(), mMargin),
-                    Utils.convertToDp(getContext(), mMargin),
+                    Utils.convertToDp(getContext(), mMargin) + Utils.getStatusBarHeight((Activity) getContext()),
                     Utils.convertToDp(getContext(), mMargin),
                     Utils.convertToDp(getContext(), mMargin)
             );
@@ -500,9 +424,11 @@ public class Sneaker implements View.OnClickListener {
         layout.setLayoutParams(layoutParams);
         layout.setOrientation(LinearLayout.HORIZONTAL);
         layout.setGravity(Gravity.CENTER_VERTICAL);
-        layout.setPadding(46, Utils.getStatusBarHeight((Activity) getContext()), 46, 0);
+        layout.setMinimumHeight(Utils.convertToDp(getContext(), 80));
+        layout.setPadding(Utils.convertToDp(getContext(), 12), Utils.convertToDp(getContext(), 12),
+                Utils.convertToDp(getContext(), 12), Utils.convertToDp(getContext(), 12));
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-            layout.setElevation(6);
+            layout.setElevation(Utils.convertToDp(getContext(), 6));
         }
         // Background color
         if (mCornerRadius == DEFAULT_VALUE) {
@@ -554,35 +480,13 @@ public class Sneaker implements View.OnClickListener {
         textLayout.setOrientation(LinearLayout.VERTICAL);
 
         LinearLayout.LayoutParams lpTv = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-        if (!mTitle.isEmpty()) {
-            TextView tvTitle = new TextView(getContext());
-            tvTitle.setLayoutParams(lpTv);
-            tvTitle.setGravity(Gravity.CENTER_VERTICAL);
-            if (!mMessage.isEmpty())
-                tvTitle.setPadding(46, 26, 26, 0); // Top padding if there is message
-            else
-                tvTitle.setPadding(46, 0, 26, 0); // No top padding if there is no message
-            if (mTitleColor != DEFAULT_VALUE)
-                tvTitle.setTextColor(mTitleColor);
-
-            // typeface
-            if (mTypeFace != null)
-                tvTitle.setTypeface(mTypeFace);
-
-            tvTitle.setTextSize(14);
-            tvTitle.setText(mTitle);
-            tvTitle.setClickable(false);
-            textLayout.addView(tvTitle);
-        }
 
         if (!mMessage.isEmpty()) {
             TextView tvMessage = new TextView(getContext());
             tvMessage.setLayoutParams(lpTv);
             tvMessage.setGravity(Gravity.CENTER_VERTICAL);
-            if (!mTitle.isEmpty())
-                tvMessage.setPadding(46, 0, 26, 26); // Bottom padding if there is title
-            else
-                tvMessage.setPadding(46, 0, 26, 0); // No bottom padding if there is no title
+            tvMessage.setPadding(Utils.convertToDp(getContext(),16), Utils.convertToDp(getContext(),8), Utils.convertToDp(getContext(),16), Utils.convertToDp(getContext(),8)); // No bottom padding if there is no title
+
             if (mMessageColor != DEFAULT_VALUE)
                 tvMessage.setTextColor(mMessageColor);
 
@@ -590,10 +494,11 @@ public class Sneaker implements View.OnClickListener {
             if (mTypeFace != null)
                 tvMessage.setTypeface(mTypeFace);
 
-            tvMessage.setTextSize(12);
+            tvMessage.setTextSize(mTextSize);
             tvMessage.setText(mMessage);
             tvMessage.setClickable(false);
             textLayout.addView(tvMessage);
+
         }
         layout.addView(textLayout);
         layout.setId(R.id.mainLayout);
@@ -604,10 +509,11 @@ public class Sneaker implements View.OnClickListener {
         layout.setOnClickListener(this);
         viewGroup.addView(layout);
 
+
+        layout.clearAnimation();
         layout.startAnimation(AnimationUtils.loadAnimation(getContext(), R.anim.popup_show));
         if (mAutoHide) {
-            final Handler handler = new Handler();
-            handler.removeCallbacks(null);
+            handler.removeCallbacksAndMessages(null);
             Runnable runnable = new Runnable() {
                 @Override
                 public void run() {
@@ -648,6 +554,11 @@ public class Sneaker implements View.OnClickListener {
      */
     @Override
     public void onClick(View view) {
+
+        if (!mDismissOnTouch) {
+            return;
+        }
+
         if (mListener != null) {
             mListener.onSneakerClick(view);
         }
